@@ -80,8 +80,17 @@ class Server(object):
         """
 
         # TODO: YOUR CODE HERE
+        if room_number == 0:
+            str = 'Room 0: you can rest here...'
+        elif room_number == 1:
+            str = 'Room 1: snake room, fight...'
+        elif room_number == 2:
+            str = 'Room 2: you found treasure...'
+        elif room_number == 3:
+            str = 'Room 3: tiger room, run...'
 
-        pass
+        return str
+
 
     def greet(self):
         """
@@ -109,8 +118,12 @@ class Server(object):
         """
 
         # TODO: YOUR CODE HERE
+        received = b''
+        while b'\n' not in received:
+            received += self.client_connection.recv(16)
 
-        pass
+        self.input_buffer = received.decode()
+
 
     def move(self, argument):
         """
@@ -135,7 +148,27 @@ class Server(object):
 
         # TODO: YOUR CODE HERE
 
-        pass
+        if argument.lower() == 'north':
+            if self.room == 0:
+                self.room = 3
+        if argument.lower() == 'south':
+            if self.room == 3:
+                self.room = 0
+        if argument.lower() == 'east':
+            room_now = self.room
+            if room_now == 1:
+                self.room = 0
+            if room_now == 0:
+                self.room = 2
+        if argument.lower() == 'west':
+            room_now = self.room
+            if room_now == 2:
+                self.room = 0
+            if room_now == 0:
+                self.room = 1
+
+        self.output_buffer = self.room_description(self.room)
+
 
     def say(self, argument):
         """
@@ -152,8 +185,8 @@ class Server(object):
         """
 
         # TODO: YOUR CODE HERE
+        self.output_buffer = 'You say, ' + '"' + argument + '"'
 
-        pass
 
     def quit(self, argument):
         """
@@ -168,8 +201,9 @@ class Server(object):
         """
 
         # TODO: YOUR CODE HERE
+        self.done = True
+        self.output_buffer = "Goodbye!"
 
-        pass
 
     def route(self):
         """
@@ -184,8 +218,17 @@ class Server(object):
         """
 
         # TODO: YOUR CODE HERE
+        received = self.input_buffer[:-1].split(" ")
 
-        pass
+        command = received.pop(0).lower()
+        arguments = " ".join(received)
+        
+        {
+            'quit': self.quit,
+            'move': self.move,
+            'say': self.say,
+        }[command](arguments)
+
 
     def push_output(self):
         """
@@ -198,8 +241,9 @@ class Server(object):
         """
 
         # TODO: YOUR CODE HERE
+        response = "OK! " + self.output_buffer + "\n"
+        self.client_connection.sendall(response.encode('utf8'))
 
-        pass
 
     def serve(self):
         self.connect()
